@@ -50,28 +50,50 @@ graph TB
 
 ### 1.2. Sơ đồ Activity
 ```mermaid
-graph TD
-    Start([Bắt đầu]) --> A[Truy cập website]
-    A --> B[Tìm kiếm/Sản phẩm]
-    B --> C{Chọn sản phẩm}
-    C --> D[Chọn biến thể: Màu sắc, Kích thước]
-    D --> E[Hệ thống kiểm tra tồn kho realtime]
+flowchart TD
+    Start([Bắt đầu]) --> A[Truy cập website Kochi Lens]
+    A --> B[Tìm kiếm / Duyệt sản phẩm]
+    B --> C{Chọn sản phẩm cần mua}
+    C --> D[Chọn biến thể<br/>Màu sắc, Kích thước]
+    D --> E[Hệ thống kiểm tra tồn kho realtime<br/>theo SKU đã chọn]
     E --> F{Tồn kho > 0?}
-    F -- Không --> G[Hiển thị "Hết hàng"]
+    F -- Không --> G[Hiển thị thông báo<br/>Hết hàng]
     G --> C
-    F -- Có --> H[Hiển thị số lượng tồn, giá]
-    H --> I[Thêm vào giỏ hàng]
-    I --> J{Xem giỏ hàng?}
-    J -- Có --> K[Hiển thị giỏ hàng\n Cập nhật số lượng]
-    K --> L[Tính toán phí ship, thuế]
-    L --> M[Tiến hành thanh toán]
-    M --> N{Chọn phương thức}
-    N --> O[VNPay / MoMo]
-    O --> P[Thanh toán thành công]
-    P --> Q[Hệ thống tạo Sale Order]
-    Q --> R[Trừ tồn kho realtime]
-    R --> End([Kết thúc])
-    J -- Không --> I
+    F -- Có --> H[Hiển thị thông tin chi tiết:<br/>Giá bán<br/>Số lượng tồn<br/>Thông số kỹ thuật]
+    H --> I[Khách hàng nhập số lượng]
+    I --> J{Đủ tồn kho?}
+    J -- Không --> K[Thông báo vượt quá tồn kho]
+    K --> I
+    J -- Có --> L[Thêm vào giỏ hàng]
+    L --> M{Tiếp tục mua hàng?}
+    M -- Có --> B
+    M -- Không --> N[Hiển thị giỏ hàng]
+    N --> O[Khách hàng cập nhật số lượng]
+    O --> P[Hệ thống kiểm tra tồn kho lại]
+    P --> Q{Đủ tồn kho?}
+    Q -- Không --> R[Hiển thị cảnh báo<br/>và đề xuất số lượng tối đa]
+    R --> O
+    Q -- Có --> S[Tính toán:<br/>Thuế VAT<br/>Phí vận chuyển<br/>Tổng giá trị đơn hàng]
+    S --> T[Tiến hành thanh toán]
+    T --> U{Đã đăng nhập?}
+    U -- Không --> V[Yêu cầu đăng nhập<br/>hoặc thanh toán với tư cách khách]
+    V --> T
+    U -- Có --> W[Chọn phương thức thanh toán]
+    W --> X{VNPay / MoMo}
+    X --> Y[Chuyển hướng đến cổng thanh toán]
+    Y --> Z{Kết quả thanh toán}
+    Z -- Thất bại --> AA[Hiển thị thông báo lỗi<br/>Giữ nguyên giỏ hàng]
+    AA --> T
+    Z -- Thành công --> AB[Nhận callback từ cổng thanh toán]
+    AB --> AC[Bắt đầu Database Transaction]
+    AC --> AD[Chuyển Draft Order thành Sale Order]
+    AD --> AE[Trừ tồn kho realtime cho từng SKU]
+    AE --> AF[Tạo Delivery Order]
+    AF --> AG[Tạo Invoice chờ]
+    AG --> AH[Commit Transaction]
+    AH --> AI[Gửi email xác nhận đơn hàng]
+    AI --> AJ[Hiển thị trang xác nhận thành công]
+    AJ --> End([Kết thúc])
 ```
 #### 1.2.1. Giải thích luồng quan trọng:
 1. Kiểm soát biến thể: Khách hàng không thể thêm sản phẩm vào giỏ nếu chưa chọn đầy đủ màu sắc/kích thước.
